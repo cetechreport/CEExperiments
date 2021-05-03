@@ -23,7 +23,7 @@ The datasets and queries will be made public upon publication of our technical p
   1,11,5
   ```
 
-## Run CEExperiment
+## Markov Table
   We use the phrases "Markov table" and "Catalogue" interchangeably in the descriptions below.
 * Decompose the query file. Note that all queries in one query file must be of the same shape, i.e., edges must be exactly the same and in the same order.
 ```
