@@ -29,13 +29,12 @@ The datasets and queries will be made public upon publication of our technical p
 ```
   java -Xmx100G -cp CEExperiments.jar Graphflow.LargeBenchmarkQueryDecomposer <query file>
 ```
-* Generate Markov table (Acyclic queries)
+* Generate the Acyclic Markov table entries
 ```
   java -Xmx100G -cp CEExperiments.jar Graphflow.Catalogue <dataset> <query file>
 ```
-* Generate Markov table (Cyclic queries)
+* Generate the additional Markov table entries used in cyclic experiments
 ```
-  java -Xmx100G -cp CEExperiments.jar Graphflow.Catalogue <dataset> <query file>
   java -Xmx100G -cp CEExperiments.jar Graphflow.TriangleCatalogue <dataset> <query file> <catalogue destination> <catalogue max degree destination> <cycle closing method>
 ```
   cycle closing method is one of ```baseline```, ```allInclusive```, and ```avgSampledExentsionRate```
