@@ -22,7 +22,7 @@ public class CatalogueEntropyConstruction implements Runnable {
 
     // patternType -> baseVList -> baseLabelSeq -> extVList -> extLabel -> extSize -> #instances
     private volatile Map<Integer, Map<String, Map<String, Map<String, Map<String, Map<Integer, Long>>>>>>
-        distribution = new HashMap<>();
+            distribution = new HashMap<>();
 
     public Map<Integer, Map<String, Map<String, Map<String, Map<String, Map<Integer, Long>>>>>>
     getDistribution() {
@@ -32,11 +32,11 @@ public class CatalogueEntropyConstruction implements Runnable {
     public void run() {
         String[] info;
         for (Pair<String, Long> entry : catalogueEntries) {
-             info = entry.key.split(",");
-             Integer patternType = Integer.parseInt(info[0]);
-             String vList = info[1];
-             String labelSeq = info[2];
-             computeDist(patternType, vList, labelSeq);
+            info = entry.key.split(",");
+            Integer patternType = Integer.parseInt(info[0]);
+            String vList = info[1];
+            String labelSeq = info[2];
+            computeDist(patternType, vList, labelSeq);
         }
     }
 
@@ -47,7 +47,7 @@ public class CatalogueEntropyConstruction implements Runnable {
         Integer[] vList = toVList(vListString);
         final Set<Integer> leaves = getLeaves(vList);
         List<Pair<Pair<String, String>, Pair<String, String>>> baseAndExtList =
-            splitToBaseAndExt(vListString, labelSeqString, leaves);
+                splitToBaseAndExt(vListString, labelSeqString, leaves);
 
         for (Pair<Pair<String, String>, Pair<String, String>> baseAndExt : baseAndExtList) {
             Integer[] baseVList = toVList(baseAndExt.key.key);
@@ -56,9 +56,6 @@ public class CatalogueEntropyConstruction implements Runnable {
             Integer[] extLabel = toLabelSeq(baseAndExt.value.value);
 
             if (!label2srcdest.containsKey(baseLabelSeq[0])) {
-                addToDistribution(
-                    patternType, baseAndExt.key.key, baseAndExt.value.key,
-                    baseAndExt.key.value, baseAndExt.value.value, 0, 0);
                 continue;
             }
 
@@ -83,7 +80,7 @@ public class CatalogueEntropyConstruction implements Runnable {
                     }
 
                     if (!current2label2next.containsKey(midPhysical) ||
-                        !current2label2next.get(midPhysical).containsKey(currentLabel)) {
+                            !current2label2next.get(midPhysical).containsKey(currentLabel)) {
                         baseCount = 0;
                         break;
                     } else {
@@ -91,39 +88,42 @@ public class CatalogueEntropyConstruction implements Runnable {
                     }
                 }
 
-                src = extVList[0];
-                dest = extVList[1];
-                if (middleVirtual2Physical.containsKey(src)) {
-                    current2label2next = src2label2dest;
-                    midPhysical = middleVirtual2Physical.get(src);
-                } else {
-                    current2label2next = dest2label2src;
-                    midPhysical = middleVirtual2Physical.get(dest);
-                }
+                ArrayList<Integer> extCounts = new ArrayList<>();
+                for (int i = 0; i < extVList.length; i += 2) {
+                    src = extVList[i];
+                    dest = extVList[i + 1];
+                    if (middleVirtual2Physical.containsKey(src)) {
+                        current2label2next = src2label2dest;
+                        midPhysical = middleVirtual2Physical.get(src);
+                    } else {
+                        current2label2next = dest2label2src;
+                        midPhysical = middleVirtual2Physical.get(dest);
+                    }
 
-                int extCount = 0;
-                if (current2label2next.containsKey(midPhysical)) {
-                    if (current2label2next.get(midPhysical).containsKey(extLabel[0])) {
-                        extCount = current2label2next.get(midPhysical).get(extLabel[0]).size();
+                    if (current2label2next.containsKey(midPhysical)) {
+                        if (current2label2next.get(midPhysical).containsKey(extLabel[i / 2])) {
+                            extCounts.add(current2label2next.get(midPhysical).get(extLabel[i / 2]).size());
+                        }
                     }
                 }
-
+                int extCount = extCounts.size() == extLabel.length? extCounts.stream().reduce(1, (a, b) -> a * b) : 0;
                 addToDistribution(
-                    patternType, baseAndExt.key.key, baseAndExt.value.key,
-                    baseAndExt.key.value, baseAndExt.value.value, extCount, baseCount);
+                        patternType, baseAndExt.key.key, baseAndExt.value.key,
+                        baseAndExt.key.value, baseAndExt.value.value, extCount, baseCount);
             }
         }
     }
 
     private void computePathDist(Integer patternType, String vListString, String labelSeqString) {
         Map<Integer, Map<Integer, List<Integer>>> current2label2next;
+        Map<Integer, Map<Integer, List<Integer>>> current2label2next2;
         Integer midPhysical, nextVirtual, src, dest;
 
         Integer[] vList = toVList(vListString);
         Integer[] labelSeq = toLabelSeq(labelSeqString);
         final Set<Integer> leaves = getLeaves(vList);
         List<Pair<Pair<String, String>, Pair<String, String>>> baseAndExtList =
-            splitToBaseAndExt(vListString, labelSeqString, leaves);
+                splitToBaseAndExt(vListString, labelSeqString, leaves);
 
         for (Pair<Pair<String, String>, Pair<String, String>> baseAndExt : baseAndExtList) {
             Integer[] baseVList = toVList(baseAndExt.key.key);
@@ -141,6 +141,102 @@ public class CatalogueEntropyConstruction implements Runnable {
                 System.out.println("ERROR: path of length " + labelSeq.length + " not supported");
                 return;
             }
+            if (extLabel.length == 2) {
+//                System.out.println(s + " base: " + String.valueOf(baseVList[0]) + " " + String.valueOf(baseVList[1]));
+                if (leaves.contains(baseVList[0]) || leaves.contains(baseVList[1])) {
+                    boolean srcLeaf = leaves.contains(baseVList[0]);
+                    int shared = srcLeaf? baseVList[1] : baseVList[0];
+                    List<Integer> extBasePhysicals = new ArrayList<>();
+                    for (Pair<Integer, Integer> srcDest : label2srcdest.get(baseLabelSeq[0])) {
+                        if (!srcLeaf) extBasePhysicals.add(srcDest.key);
+                        else extBasePhysicals.add(srcDest.value);
+                    }
+
+                    if (extVList[2] == shared || extVList[3] == shared) {
+                        Integer temp = extLabel[1];
+                        extLabel[1] = extLabel[0];
+                        extLabel[0] = temp;
+                        extVList = new Integer[] {extVList[2], extVList[3], extVList[0], extVList[1]};
+                    }
+
+                    if (extVList[0] == shared) current2label2next = src2label2dest;
+                    else current2label2next = dest2label2src;
+
+                    if (leaves.contains(extVList[2])) current2label2next2 = dest2label2src;
+                    else current2label2next2 = src2label2dest;
+
+                    for (Integer extBasePhysical : extBasePhysicals) {
+                        int extCount = 0;
+                        if (current2label2next.containsKey(extBasePhysical)) {
+                            if (current2label2next.get(extBasePhysical).containsKey(extLabel[0])) {
+                                for (Integer v : current2label2next.get(extBasePhysical).get(extLabel[0])) {
+                                    if (current2label2next2.containsKey(v)) {
+                                        if (current2label2next2.get(v).containsKey(extLabel[1])) {
+                                            extCount += current2label2next2.get(v).get(extLabel[1]).size();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        addToDistribution(
+                                patternType, baseAndExt.key.key, baseAndExt.value.key,
+                                baseAndExt.key.value, baseAndExt.value.value, extCount, 1L);
+                    }
+                } else {
+                    Integer label1;
+                    Integer label2;
+                    if (extVList[0].equals(baseVList[0])) {
+                        current2label2next = src2label2dest;
+                        label1 = extLabel[0];
+                    } else if (extVList[1].equals(baseVList[0])) {
+                        current2label2next = dest2label2src;
+                        label1 = extLabel[0];
+                    } else if (extVList[2].equals(baseVList[0])) {
+                        current2label2next = src2label2dest;
+                        label1 = extLabel[1];
+                    } else {
+                        current2label2next = dest2label2src;
+                        label1 = extLabel[1];
+                    }
+
+                    if (extVList[0].equals(baseVList[1])) {
+                        current2label2next2 = src2label2dest;
+                        label2 = extLabel[0];
+                    } else if (extVList[1].equals(baseVList[1])) {
+                        current2label2next2 = dest2label2src;
+                        label2 = extLabel[0];
+                    } else if (extVList[2].equals(baseVList[1])) {
+                        current2label2next2 = src2label2dest;
+                        label2 = extLabel[1];
+                    } else {
+                        current2label2next2 = dest2label2src;
+                        label2 = extLabel[1];
+                    }
+
+                    for (Pair<Integer, Integer> srcDest : label2srcdest.get(baseLabelSeq[0])) {
+                        int extCount1 = 0;
+                        if (current2label2next.containsKey(srcDest.key)) {
+                            if (current2label2next.get(srcDest.key).containsKey(label1)) {
+                                extCount1 += current2label2next.get(srcDest.key).get(label1).size();
+                            }
+                        }
+
+                        int extCount2 = 0;
+                        if (current2label2next2.containsKey(srcDest.value)) {
+                            if (current2label2next2.get(srcDest.value).containsKey(label2)) {
+                                extCount2 += current2label2next2.get(srcDest.value).get(label2).size();
+                            }
+                        }
+
+                        addToDistribution(
+                                patternType, baseAndExt.key.key, baseAndExt.value.key,
+                                baseAndExt.key.value, baseAndExt.value.value, extCount1 * extCount2, 1L);
+                    }
+
+                }
+                continue;
+            }
 
             for (Pair<Integer, Integer> srcDest : label2srcdest.get(middleE[2])) {
                 middleVirtual2Physical.put(middleE[0], srcDest.key);
@@ -152,7 +248,7 @@ public class CatalogueEntropyConstruction implements Runnable {
                     src = baseVList[i];
                     dest = baseVList[i + 1];
                     if (middleVirtual2Physical.containsKey(src) &&
-                        middleVirtual2Physical.containsKey(dest)) continue;
+                            middleVirtual2Physical.containsKey(dest)) continue;
 
                     Integer currentLabel = baseLabelSeq[i / 2];
                     if (middleVirtual2Physical.containsKey(src)) {
@@ -169,10 +265,10 @@ public class CatalogueEntropyConstruction implements Runnable {
                         if (current2label2next.get(midPhysical).containsKey(currentLabel)) {
                             if (leaves.contains(nextVirtual)) {
                                 baseCount =
-                                    current2label2next.get(midPhysical).get(currentLabel).size();
+                                        current2label2next.get(midPhysical).get(currentLabel).size();
                             } else {
                                 extBasePhysicals =
-                                    current2label2next.get(midPhysical).get(currentLabel);
+                                        current2label2next.get(midPhysical).get(currentLabel);
                             }
                         }
                     }
@@ -197,13 +293,13 @@ public class CatalogueEntropyConstruction implements Runnable {
                     if (current2label2next.containsKey(extBasePhysical)) {
                         if (current2label2next.get(extBasePhysical).containsKey(extLabel[0])) {
                             extCount =
-                                current2label2next.get(extBasePhysical).get(extLabel[0]).size();
+                                    current2label2next.get(extBasePhysical).get(extLabel[0]).size();
                         }
                     }
 
                     addToDistribution(
-                        patternType, baseAndExt.key.key, baseAndExt.value.key,
-                        baseAndExt.key.value, baseAndExt.value.value, extCount, baseCount);
+                            patternType, baseAndExt.key.key, baseAndExt.value.key,
+                            baseAndExt.key.value, baseAndExt.value.value, extCount, baseCount);
                 }
             }
         }
@@ -217,7 +313,7 @@ public class CatalogueEntropyConstruction implements Runnable {
         Integer[] labelSeq = toLabelSeq(labelSeqString);
         final Set<Integer> leaves = getLeaves(vList);
         List<Pair<Pair<String, String>, Pair<String, String>>> baseAndExtList =
-            splitToBaseAndExt(vListString, labelSeqString, leaves);
+                splitToBaseAndExt(vListString, labelSeqString, leaves);
 
         Integer[] middleE = getMiddleEdge(vList, labelSeq, leaves);
         Map<Integer, Integer> middleVirtual2Physical = new HashMap<>();
@@ -237,7 +333,7 @@ public class CatalogueEntropyConstruction implements Runnable {
                     src = baseVList[i];
                     dest = baseVList[i + 1];
                     if (middleVirtual2Physical.containsKey(src) &&
-                        middleVirtual2Physical.containsKey(dest)) continue;
+                            middleVirtual2Physical.containsKey(dest)) continue;
 
                     Integer currentLabel = baseLabelSeq[i / 2];
                     if (middleVirtual2Physical.containsKey(src)) {
@@ -249,7 +345,7 @@ public class CatalogueEntropyConstruction implements Runnable {
                     }
 
                     if (!current2label2next.containsKey(midPhysical) ||
-                        !current2label2next.get(midPhysical).containsKey(currentLabel)) {
+                            !current2label2next.get(midPhysical).containsKey(currentLabel)) {
                         baseCount = 0;
                         break;
                     } else {
@@ -275,8 +371,8 @@ public class CatalogueEntropyConstruction implements Runnable {
                 }
 
                 addToDistribution(
-                    patternType, baseAndExt.key.key, baseAndExt.value.key,
-                    baseAndExt.key.value, baseAndExt.value.value, extCount, baseCount);
+                        patternType, baseAndExt.key.key, baseAndExt.value.key,
+                        baseAndExt.key.value, baseAndExt.value.value, extCount, baseCount);
             }
         }
     }
@@ -359,7 +455,7 @@ public class CatalogueEntropyConstruction implements Runnable {
     }
 
     private List<Pair<Pair<String, String>, Pair<String, String>>> splitToBaseAndExt(
-        String vListString, String labelSeqString, Set<Integer> leaves) {
+            String vListString, String labelSeqString, Set<Integer> leaves) {
 
         List<Pair<Pair<String, String>, Pair<String, String>>> splits = new ArrayList<>();
 
@@ -367,22 +463,29 @@ public class CatalogueEntropyConstruction implements Runnable {
         String[] labelSeq = labelSeqString.split("->");
         for (int i = 0; i < edges.length; ++i) {
             String[] srcDest = edges[i].split("-");
+//            if (leaves.contains(Integer.parseInt(srcDest[0])) ||
+//                leaves.contains(Integer.parseInt(srcDest[1]))) {
+
+            StringJoiner vListSj = new StringJoiner(";");
+            StringJoiner labelSeqSj = new StringJoiner("->");
+            for (int j = 0; j < edges.length; ++j) {
+                if (i == j) continue;
+                vListSj.add(edges[j]);
+                labelSeqSj.add(labelSeq[j]);
+            }
             if (leaves.contains(Integer.parseInt(srcDest[0])) ||
-                leaves.contains(Integer.parseInt(srcDest[1]))) {
-
-                StringJoiner vListSj = new StringJoiner(";");
-                StringJoiner labelSeqSj = new StringJoiner("->");
-                for (int j = 0; j < edges.length; ++j) {
-                    if (i == j) continue;
-                    vListSj.add(edges[j]);
-                    labelSeqSj.add(labelSeq[j]);
-                }
-
+                    leaves.contains(Integer.parseInt(srcDest[1]))) {
                 splits.add(new Pair<>(
-                    new Pair<>(vListSj.toString(), edges[i]),
-                    new Pair<>(labelSeqSj.toString(), labelSeq[i])
+                        new Pair<>(vListSj.toString(), edges[i]),
+                        new Pair<>(labelSeqSj.toString(), labelSeq[i])
                 ));
             }
+//            System.out.println("1: " + edges[i] + " " + vListSj.toString());
+            splits.add(new Pair<>(
+                    new Pair<>(edges[i], vListSj.toString()),
+                    new Pair<>(labelSeq[i], labelSeqSj.toString())
+            ));
+//            }
         }
 
         return splits;
@@ -413,21 +516,21 @@ public class CatalogueEntropyConstruction implements Runnable {
     }
 
     private void addToDistribution(
-        Integer patternType, String baseVList, String baseLabelSeq, String extVList, String extLabel,
-        int extSize, long contribution) {
+            Integer patternType, String baseVList, String baseLabelSeq, String extVList, String extLabel,
+            int extSize, long contribution) {
 
         distribution.putIfAbsent(patternType, new HashMap<>());
         distribution.get(patternType).putIfAbsent(baseVList, new HashMap<>());
         distribution.get(patternType).get(baseVList).putIfAbsent(baseLabelSeq, new HashMap<>());
         distribution.get(patternType).get(baseVList).get(baseLabelSeq)
-            .putIfAbsent(extVList, new HashMap<>());
+                .putIfAbsent(extVList, new HashMap<>());
         distribution.get(patternType).get(baseVList).get(baseLabelSeq).get(extVList)
-            .putIfAbsent(extLabel, new HashMap<>());
+                .putIfAbsent(extLabel, new HashMap<>());
         long count = distribution.get(patternType).get(baseVList).get(baseLabelSeq)
-            .get(extVList).get(extLabel).getOrDefault(extSize, 0L);
+                .get(extVList).get(extLabel).getOrDefault(extSize, 0L);
 
         distribution.get(patternType).get(baseVList).get(baseLabelSeq).get(extVList).get(extLabel)
-            .put(extSize, count + contribution);
+                .put(extSize, count + contribution);
     }
 
     private void persistDist() throws Exception {
@@ -436,7 +539,7 @@ public class CatalogueEntropyConstruction implements Runnable {
             for (String baseVList : distribution.get(patternType).keySet()) {
                 for (String baseLabelSeq : distribution.get(patternType).get(baseVList).keySet()) {
                     Map<String, Map<String, Map<Integer, Long>>> extDist =
-                        distribution.get(patternType).get(baseVList).get(baseLabelSeq);
+                            distribution.get(patternType).get(baseVList).get(baseLabelSeq);
 
                     for (String extVList : extDist.keySet()) {
                         for (String extLabel : extDist.get(extVList).keySet()) {
@@ -462,11 +565,11 @@ public class CatalogueEntropyConstruction implements Runnable {
     }
 
     public CatalogueEntropyConstruction(
-        int threadId,
-        Map<Integer, List<Pair<Integer, Integer>>> label2srcdest,
-        Map<Integer, Map<Integer, List<Integer>>> src2label2dest,
-        Map<Integer, Map<Integer, List<Integer>>> dest2label2src,
-        List<Pair<String, Long>> catalogueEntries) {
+            int threadId,
+            Map<Integer, List<Pair<Integer, Integer>>> label2srcdest,
+            Map<Integer, Map<Integer, List<Integer>>> src2label2dest,
+            Map<Integer, Map<Integer, List<Integer>>> dest2label2src,
+            List<Pair<String, Long>> catalogueEntries) {
 
         this.threadId = threadId;
         this.label2srcdest = label2srcdest;

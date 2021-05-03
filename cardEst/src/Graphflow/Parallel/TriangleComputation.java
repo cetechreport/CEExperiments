@@ -4,6 +4,7 @@ import Common.Pair;
 import Common.Triple;
 import Common.Util;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -18,11 +19,16 @@ public class TriangleComputation implements Callable<Triple<String, String, Stri
     String sortedTriangleLabelSeq;
     String triangleVList;
     String triangleLabelSeq;
+    String trig;
 
     public Triple<String, String, String> call() {
         Integer[] vList = Common.Util.toVList(triangleVList);
         Integer[] labelSeq = Common.Util.toLabelSeq(triangleLabelSeq);
         String[] vListEdges = triangleVList.split(";");
+
+        if(!trig.equals("")) {
+            vList = Common.Util.toVList(trig);
+        }
 
         Map<Integer, Map<Integer, List<Integer>>> src2intersect;
         Map<Integer, Map<Integer, List<Integer>>> dest2intersect;
@@ -82,6 +88,8 @@ public class TriangleComputation implements Callable<Triple<String, String, Stri
         Pair<String, String> sorted =
             Util.sort(new Pair<>(vListEdges[1] + ";" + vListEdges[2], labelSeq[1] + "->" + labelSeq[2]));
 
+        if(!trig.equals("")) sortedTriangleVList = "*" + sortedTriangleVList;
+
         return new Triple<>(
             runType,
             sortedTriangleVList + "," + sortedTriangleLabelSeq + "," + totalCount,
@@ -119,7 +127,8 @@ public class TriangleComputation implements Callable<Triple<String, String, Stri
         String triangleLabelSeq,
         Map<Integer, Map<Integer, List<Integer>>> src2label2dest,
         Map<Integer, Map<Integer, List<Integer>>> dest2label2src,
-        List<Pair<Integer, Integer>> starters) {
+        List<Pair<Integer, Integer>> starters,
+        String trig) {
         this.runType = runType;
         this.sortedTriangleVList = sortedTriangleVList;
         this.sortedTriangleLabelSeq = sortedTriangleLabelSeq;
@@ -128,5 +137,6 @@ public class TriangleComputation implements Callable<Triple<String, String, Stri
         this.src2label2dest = src2label2dest;
         this.dest2label2src = dest2label2src;
         this.starters = starters;
+        this.trig = trig;
     }
 }

@@ -25,6 +25,7 @@ The datasets and queries will be made public upon publication of our technical p
 ## Run CEExperiment
   We will refer Markov table as catalogue in the following content
 * Decompose the query file. Note that all queries must have same shape, i.e., edges must be exactly the same and in the same order.
+* Decompositions will be stored in ```decom.csv```
 ```
   java -Xmx100G -cp CEExperiments.jar Graphflow.LargeBenchmarkQueryDecomposer <query file>
 ```
@@ -47,7 +48,7 @@ The datasets and queries will be made public upon publication of our technical p
   
 ## Acyclic Experiments
 ```
-./runAcyclic <dataset> <query file>
+./runAcyclic <dataset> <query file> <output file>
 ```
 * All queries in the query file must have teh same shape, i.e., edges must be exactly the same and in the same order.
 * Each line in the output file has the format of edges, labels, estimations. THe order of estimations is all-min, all-max, all-avg, min-min, min-max, min-avg, max-min, max-max, max-avg, and p*.

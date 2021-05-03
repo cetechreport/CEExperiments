@@ -4,23 +4,12 @@ import Common.Pair;
 import Common.Query;
 import Common.Topology;
 import IMDB.Labels;
-import com.sun.tools.classfile.ConstantPool.CONSTANT_Class_info;
-import com.sun.tools.internal.jxc.ap.Const;
-import org.omg.CORBA.INTERNAL;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Set;
-import java.util.StringJoiner;
+import java.util.*;
 
 public class CharacteristicSets {
     public Map<CharacteristicSet, Set<Integer>> cSets;

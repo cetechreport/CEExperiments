@@ -1,5 +1,4 @@
 package Graphflow;
-
 import CharacteristicSet.CharacteristicSets;
 import Common.Pair;
 import Common.Query;
@@ -11,7 +10,6 @@ import Graphflow.Parallel.CatalogueConstructionPerVList;
 import IMDB.Labels;
 import MarkovTable.PropertyFilter.MT;
 import org.apache.commons.lang3.StringUtils;
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -21,18 +19,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.StringJoiner;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import static java.lang.Math.*;
+
 
 public class Catalogue {
     private Map<Integer, Map<Integer, List<Integer>>> src2label2dest = new HashMap<>();
@@ -42,12 +33,14 @@ public class Catalogue {
     public Map<Integer, Integer> vid2prodYear = new HashMap<>();
 
     // query topology -> decomVListString (defining decom topology) -> edge label seq -> count
-    private List<Map<String, Map<String, Long>>> catalogue = new ArrayList<>();
+    public static List<Map<String, Map<String, Long>>> catalogue = new ArrayList<>();
 
     private CharacteristicSets characteristicSets;
     private MT mt;
 
-    Integer[][] decoms = null;
+    public static Integer[][] decoms = null;
+
+    private int subsetSize = 500000;
 
     public Catalogue(String graphFile, String destFile) throws Exception {
         readGraph(graphFile);
@@ -193,7 +186,7 @@ public class Catalogue {
         return leaves;
     }
 
-    private int getType(Integer[] vList) {
+    public static int getType(Integer[] vList) {
         if (vList.length == 6 || vList.length == 4) {
             return Constants.C_STAR;
         }
@@ -277,7 +270,7 @@ public class Catalogue {
             for (Integer label : topology.outgoing.get(virtualSrc).keySet()) {
                 if (label.equals(midLabel)) continue;
                 if (!src2label2dest.containsKey(src) ||
-                    !src2label2dest.get(src).containsKey(label)) {
+                        !src2label2dest.get(src).containsKey(label)) {
                     countPerSrc *= 0;
                 } else {
                     countPerSrc *= src2label2dest.get(src).get(label).size();
@@ -286,7 +279,7 @@ public class Catalogue {
             for (Integer label : topology.incoming.get(virtualSrc).keySet()) {
                 if (label.equals(midLabel)) continue;
                 if (!dest2label2src.containsKey(src) ||
-                    !dest2label2src.get(src).containsKey(label)) {
+                        !dest2label2src.get(src).containsKey(label)) {
                     countPerSrc *= 0;
                 } else {
                     countPerSrc *= dest2label2src.get(src).get(label).size();
@@ -299,7 +292,7 @@ public class Catalogue {
                 for (Integer label : topology.outgoing.get(virtualDest).keySet()) {
                     if (label.equals(midLabel)) continue;
                     if (!src2label2dest.containsKey(dest) ||
-                        !src2label2dest.get(dest).containsKey(label)) {
+                            !src2label2dest.get(dest).containsKey(label)) {
                         countPerBranch *= 0;
                     } else {
                         countPerBranch *= src2label2dest.get(dest).get(label).size();
@@ -308,7 +301,7 @@ public class Catalogue {
                 for (Integer label : topology.incoming.get(virtualDest).keySet()) {
                     if (label.equals(midLabel)) continue;
                     if (!dest2label2src.containsKey(dest) ||
-                        !dest2label2src.get(dest).containsKey(label)) {
+                            !dest2label2src.get(dest).containsKey(label)) {
                         countPerBranch *= 0;
                     } else {
                         countPerBranch *= dest2label2src.get(dest).get(label).size();
@@ -363,7 +356,7 @@ public class Catalogue {
                     virtualDest = vList[i * 2 + 1];
 
                     if (virtual2physicals.containsKey(virtualSrc) &&
-                        virtual2physicals.containsKey(virtualDest)) continue;
+                            virtual2physicals.containsKey(virtualDest)) continue;
 
                     if (virtual2physicals.containsKey(virtualSrc)) {
                         virtual2physicals.putIfAbsent(virtualDest, new HashSet<>());
@@ -372,7 +365,7 @@ public class Catalogue {
                             if (!src2label2dest.get(currentV).containsKey(labelSeq[i])) continue;
 
                             virtual2physicals.get(virtualDest).addAll(
-                                src2label2dest.get(currentV).get(labelSeq[i])
+                                    src2label2dest.get(currentV).get(labelSeq[i])
                             );
                         }
                     } else if (virtual2physicals.containsKey(virtualDest)) {
@@ -382,7 +375,7 @@ public class Catalogue {
                             if (!dest2label2src.get(currentV).containsKey(labelSeq[i])) continue;
 
                             virtual2physicals.get(virtualSrc).addAll(
-                                dest2label2src.get(currentV).get(labelSeq[i])
+                                    dest2label2src.get(currentV).get(labelSeq[i])
                             );
                         }
                     } else {
@@ -423,7 +416,7 @@ public class Catalogue {
             System.out.print("\rConstructing: Line " + lineNo);
 
             construct = new CatalogueConstructionPerVList(
-                lineNo, src2label2dest, dest2label2src, label2src2dest, label2dest2src, line);
+                    lineNo, src2label2dest, dest2label2src, label2src2dest, label2dest2src, line);
 
             thread = new Thread(construct);
             threads.add(thread);
@@ -583,7 +576,7 @@ public class Catalogue {
         return qualified / vid2prodYear.keySet().size();
     }
 
-    private String extractPath(Topology topology, Integer[] vertexList) {
+    public static String extractPath(Topology topology, Integer[] vertexList) {
         StringJoiner path = new StringJoiner("->");
         for (int i = 0; i < vertexList.length; i += 2) {
             for (Integer label : topology.outgoing.get(vertexList[i]).keySet()) {
@@ -598,7 +591,7 @@ public class Catalogue {
         return path.toString();
     }
 
-    private String toVListString(Integer[] vList) {
+    public static String toVListString(Integer[] vList) {
         StringJoiner sj = new StringJoiner(";");
         for (int i = 0; i < vList.length; i += 2) {
             sj.add(vList[i] + "-" + vList[i + 1]);
@@ -606,7 +599,7 @@ public class Catalogue {
         return sj.toString();
     }
 
-    private Set<Integer> toLabelSet(String labelSeq) {
+    public static Set<Integer> toLabelSet(String labelSeq) {
         Set<Integer> labelSet = new HashSet<>();
         String[] splitted = labelSeq.split("->");
         for (String label : splitted) {
@@ -696,7 +689,7 @@ public class Catalogue {
             for (Integer label : query.topology.outgoing.get(src).keySet()) {
                 if (query.topology.outgoing.get(src).get(label).contains(dest)) {
                     topology.addEdge(
-                        oldIndex2newIndex.get(src), label, oldIndex2newIndex.get(dest)
+                            oldIndex2newIndex.get(src), label, oldIndex2newIndex.get(dest)
                     );
                     break;
                 }
@@ -711,19 +704,21 @@ public class Catalogue {
         return new Query(topology, extractedFilters);
     }
 
-    private Pair<String, String> getOverlap(Set<Integer> covered, String labelSeq, String vList) {
+    public static Pair<String, String> getOverlap(Set<String> visited, String labelSeq, String vList) {
         String[] labelSeqSplitted = labelSeq.split("->");
         String[] vListSplitted = vList.split(";");
         StringJoiner labelSj = new StringJoiner("->");
         StringJoiner vListSj = new StringJoiner(";");
 
-        for (int i = 0; i < labelSeqSplitted.length; ++i) {
-            if (covered.contains(Integer.parseInt(labelSeqSplitted[i]))) {
+        for (int i = 0; i < vListSplitted.length; ++i) {
+            if (visited.contains(vListSplitted[i])) {
                 labelSj.add(labelSeqSplitted[i]);
                 vListSj.add(vListSplitted[i]);
             }
         }
-
+//        System.out.println("overlap labs: " + labelSj.toString());
+//        System.out.println("overlap vlist: " + vListSj.toString());
+//        System.out.println();
         return new Pair<>(labelSj.toString(), vListSj.toString());
     }
 
@@ -735,7 +730,7 @@ public class Catalogue {
                 return Constants.DECOMPOSITIONS3;
             case 2:
                 Integer[][][] allLength2 =
-                    new Integer[LargeBenchmarkDecompositions.BASE + LargeBenchmarkDecompositions.LENGTH2.length + 1][][];
+                        new Integer[LargeBenchmarkDecompositions.BASE + LargeBenchmarkDecompositions.LENGTH2.length + 1][][];
                 for (int i = 0; i < Constants.DECOMPOSITIONS2.length; ++i) {
                     allLength2[i] = Constants.DECOMPOSITIONS2[i];
                 }
@@ -745,7 +740,7 @@ public class Catalogue {
                 }
                 for (int i = 0; i < LargeBenchmarkDecompositions.LENGTH2.length; ++i) {
                     int adjusted = LargeBenchmarkDecompositions.BASE + i + 1;
-                    allLength2[adjusted] = LargeBenchmarkDecompositions.LENGTH2[i];
+                    allLength2[adjusted] = LargeBenchmarkDecompositions.LENGTH2;
                 }
                 return allLength2;
             default:
@@ -754,7 +749,7 @@ public class Catalogue {
         }
     }
 
-    private void computeDecomByLength(Query query, int maxLen) {
+    static public void computeDecomByLength(Query query, int maxLen) {
         if (decoms != null) return;
 
         QueryDecomposer decomposer = new QueryDecomposer();
@@ -768,7 +763,7 @@ public class Catalogue {
         }
     }
 
-    private Integer[][] getDecomByLen(int len) {
+    public static Integer[][] getDecomByLen(int len) {
         return Arrays.stream(decoms).filter(vList -> vList.length / 2 == len).toArray(Integer[][]::new);
     }
 
@@ -779,109 +774,85 @@ public class Catalogue {
 
         if (patternType.equals(Constants.FORK24)) {
             return Arrays.stream(getDecomByLength(catLen)[patternType])
-                .filter(entry -> getType(entry) == Constants.C_FORK)
-                .toArray(Integer[][]::new);
+                    .filter(entry -> getType(entry) == Constants.C_FORK)
+                    .toArray(Integer[][]::new);
         } else if (patternType.equals(Constants.PI)) {
             return Arrays.stream(getDecomByLength(catLen)[patternType])
-                .filter(entry -> getType(entry) == Constants.C_PATH)
-                .toArray(Integer[][]::new);
+                    .filter(entry -> getType(entry) == Constants.C_PATH)
+                    .toArray(Integer[][]::new);
         } else if (patternType.equals(Constants.FORK33)) {
             return Arrays.stream(getDecomByLength(catLen)[patternType])
-                .filter(entry -> getType(entry) == Constants.C_PATH)
-                .toArray(Integer[][]::new);
+                    .filter(entry -> getType(entry) == Constants.C_PATH)
+                    .toArray(Integer[][]::new);
         } else if (patternType.equals(Constants.FORK34)) {
             return Arrays.stream(getDecomByLength(catLen)[patternType])
-                .filter(entry -> getType(entry) == Constants.C_PATH)
-                .toArray(Integer[][]::new);
+                    .filter(entry -> getType(entry) == Constants.C_PATH)
+                    .toArray(Integer[][]::new);
         } else if (patternType.equals(Constants.BIFORK)) {
             return Arrays.stream(getDecomByLength(catLen)[patternType])
-                .filter(entry -> getType(entry) == Constants.C_PATH)
-                .toArray(Integer[][]::new);
+                    .filter(entry -> getType(entry) == Constants.C_PATH)
+                    .toArray(Integer[][]::new);
         } else {
             System.err.println("ERROR: getStartingDecoms - unrecognized pattern");
             return null;
         }
     }
 
+    public static Set<String> toVSet(String vListString) {
+        String[] split = vListString.split(",");
+        Set<String> VSet = new HashSet<String>();
+        for (String edges : split) {
+            String[] edge_arr = edges.split(";");
+            for (String edge : edge_arr) {
+                VSet.add(edge);
+            }
+        }
+        return VSet;
+    }
+
     // implement different combinations including different number of overlapping edges and
     // different number of uniformity assumptions
     private List<Triple<Set<Integer>, String, Double>> getAllEstimates(
-        Query query, Integer patternType, int formulaType, int catLen) {
+            Query query, Integer patternType, int formulaType, int catLen, String VList) throws Exception {
         List<Triple<Set<Integer>, String, Double>> alreadyCovered = new ArrayList<>();
-        Set<Triple<Set<Integer>, String, Double>> currentCoveredLabelsAndCard = new HashSet<>();
-        Set<Triple<Set<Integer>, String, Double>> nextCoveredLabelsAndCard = new HashSet<>();
+        Set<String> alledges = toVSet(VList);
 
-        Set<Integer> allLabels = getAllLabels(query.topology);
-
-        String startLabelSeq, nextLabelSeq, vListString, extendVListString, formula;
-        Pair<String, String> overlap;
-        Set<Integer> nextLabelSet, nextCovered;
-        Set<Integer> intersection = new HashSet<>();
-
-//        Integer[][] startingDecoms = getStartingDecoms(patternType, formulaType, catLen);
         computeDecomByLength(query, catLen);
         Integer[][] startingDecoms = getDecomByLen(catLen);
 
+        List<Thread> threads = new ArrayList<>();
+        List<EstimateParallel> ests = new ArrayList<>();
+        EstimateParallel est_par;
+        Thread thread;
+        int i = 0;
+
         for (Integer[] vList : startingDecoms) {
-            startLabelSeq = extractPath(query.topology, vList);
-            vListString = toVListString(vList);
-            double est = catalogue.get(patternType).get(vListString).get(startLabelSeq);
-
-            currentCoveredLabelsAndCard.clear();
-            currentCoveredLabelsAndCard.add(
-                new Triple<>(toLabelSet(startLabelSeq), vListString, est));
-
-            for (int i = 0; i < allLabels.size() - vList.length / 2; ++i) {
-                for (Integer[] extendVList : getDecomByLen(catLen)) {
-                    nextLabelSeq = extractPath(query.topology, extendVList);
-                    nextLabelSet = toLabelSet(nextLabelSeq);
-                    extendVListString = toVListString(extendVList);
-
-                    if (!Util.doesEntryFitFormula(getType(extendVList), formulaType)) continue;
-
-                    for (Triple<Set<Integer>, String, Double> coveredAndCard : currentCoveredLabelsAndCard) {
-                        if (coveredAndCard.v1.equals(allLabels)) {
-                            alreadyCovered.add(coveredAndCard);
-                            continue;
-                        } else {
-                            nextCoveredLabelsAndCard.add(coveredAndCard);
-                        }
-
-                        intersection.clear();
-                        intersection.addAll(coveredAndCard.v1);
-                        intersection.retainAll(nextLabelSet);
-                        if (intersection.size() == 0 ||
-                            intersection.size() == nextLabelSet.size()) continue;
-
-                        overlap = getOverlap(coveredAndCard.v1, nextLabelSeq, extendVListString);
-                        est = coveredAndCard.v3;
-                        est /= catalogue.get(patternType).get(overlap.value).get(overlap.key);
-                        est *= catalogue.get(patternType).get(extendVListString).get(nextLabelSeq);
-
-                        nextCovered = new HashSet<>(coveredAndCard.v1);
-                        nextCovered.addAll(nextLabelSet);
-
-                        formula = coveredAndCard.v2;
-                        formula += "," + extendVListString + "," + overlap.value;
-                        nextCoveredLabelsAndCard.add(new Triple<>(nextCovered, formula, est));
-                    }
-
-                    currentCoveredLabelsAndCard = nextCoveredLabelsAndCard;
-                    nextCoveredLabelsAndCard = new HashSet<>();
-                }
-            }
-
-            alreadyCovered.addAll(currentCoveredLabelsAndCard);
+            est_par = new EstimateParallel(i, query, patternType, formulaType, catLen,
+                    VList, vList, subsetSize, false);
+            ests.add(est_par);
+            thread = new Thread(est_par);
+            threads.add(thread);
+            thread.start();
+            i++;
         }
 
+        for(Thread t : threads) {
+            t.join();
+        }
+
+        for (EstimateParallel r : ests) {
+            alreadyCovered.addAll(r.alreadyCovered);
+        }
+
+        // System.out.println(alreadyCovered);
         return alreadyCovered.stream()
-            .filter(triple -> triple.v1.equals(allLabels))
-            .collect(Collectors.toList());
+                .filter(triple -> toVSet(triple.v2).equals(alledges))
+                .collect(Collectors.toList());
     }
 
-    public Double[] estimate(Query query, Integer patternType, int formulaType, int catLen) {
+    public Double[] estimate(Query query, Integer patternType, int formulaType, int catLen) throws Exception {
         List<Triple<Set<Integer>, String, Double>> alreadyCovered =
-            getAllEstimates(query, patternType, formulaType, catLen);
+                getAllEstimates(query, patternType, formulaType, catLen, "");
 
         // (avg, min, max) based
         Set<Double> allEst = new HashSet<>();
@@ -903,10 +874,10 @@ public class Catalogue {
     }
 
     public Map<String, Double> estimateByFormula(
-        Query query, Integer patternType, int formulaType, int catLen) {
+            Query query, Integer patternType, int formulaType, int catLen) throws Exception {
 
         List<Triple<Set<Integer>, String, Double>> alreadyCovered =
-            getAllEstimates(query, patternType, formulaType, catLen);
+                getAllEstimates(query, patternType, formulaType, catLen, "");
 
         Map<String, Double> formula2est = new HashMap<>();
         for (Triple<Set<Integer>, String, Double> triple : alreadyCovered) {
@@ -926,11 +897,11 @@ public class Catalogue {
         return formula2est;
     }
 
-    public Double[] estimateByHops(Query query, Integer patternType, int formulaType, int catLen) {
+    public Double[] estimateByHops(Query query, Integer patternType, int formulaType, int catLen, String VList) throws Exception {
         List<Triple<Set<Integer>, String, Double>> alreadyCovered =
-            getAllEstimates(query, patternType, formulaType, catLen);
+                getAllEstimates(query, patternType, formulaType, catLen, VList);
 
-        Set<Double> allEst = new HashSet<>();
+//        Set<Double> allEst = new HashSet<>();
         int numFormula = 0;
         Triple<Double, Double, Double> globalAggr = new Triple<>(Double.MAX_VALUE, Double.MIN_VALUE, 0.0);
 
@@ -940,9 +911,10 @@ public class Catalogue {
         int maxHop = Integer.MIN_VALUE;
         int minHop = Integer.MAX_VALUE;
         for (Triple<Set<Integer>, String, Double> triple : alreadyCovered) {
-            double est = ((long) (triple.v3 * Math.pow(10, 6))) / Math.pow(10, 6);
-            if (allEst.contains(est)) continue;
-            allEst.add(est);
+//            double est = ((long) (triple.v3 * Math.pow(10, 6))) / Math.pow(10, 6);
+            double est = triple.v3;
+//            if (allEst.contains(est)) continue;
+//            allEst.add(est);
 
             globalAggr.v1 = Math.min(globalAggr.v1, est);
             globalAggr.v2 = Math.max(globalAggr.v2, est);
@@ -963,16 +935,252 @@ public class Catalogue {
         }
 
         return new Double[] {
-            globalAggr.v1,
-            globalAggr.v2,
-            globalAggr.v3 / numFormula,
-            numHop2aggr.get(minHop).v1,
-            numHop2aggr.get(minHop).v2,
-            numHop2aggr.get(minHop).v3 / numHops2numFormula.get(minHop),
-            numHop2aggr.get(maxHop).v1,
-            numHop2aggr.get(maxHop).v2,
-            numHop2aggr.get(maxHop).v3 / numHops2numFormula.get(maxHop)
+                globalAggr.v1,
+                globalAggr.v2,
+                globalAggr.v3 / numFormula,
+                numHop2aggr.get(minHop).v1,
+                numHop2aggr.get(minHop).v2,
+                numHop2aggr.get(minHop).v3 / numHops2numFormula.get(minHop),
+                numHop2aggr.get(maxHop).v1,
+                numHop2aggr.get(maxHop).v2,
+                numHop2aggr.get(maxHop).v3 / numHops2numFormula.get(maxHop)
         };
+    }
+
+    private List<List<Triple<Integer, String, Double>>> getAllEstimatesRandom(
+            Query query, Integer patternType, int formulaType, int catLen, String VList) throws Exception {
+        List<Triple<Integer, String, Double>> minhops = new ArrayList<>();
+        List<Triple<Integer, String, Double>> maxhops = new ArrayList<>();
+        List<Triple<Integer, String, Double>> randomhops = new ArrayList<>();;
+        Set<String> alledges = toVSet(VList);
+
+        computeDecomByLength(query, catLen);
+        Integer[][] startingDecoms = getDecomByLen(catLen);
+
+        List<Thread> threads = new ArrayList<>();
+        List<EstimateParallel> ests = new ArrayList<>();
+        EstimateParallel est_par;
+        Thread thread;
+        int threadnum = 100;
+
+        for (int i = 0; i < threadnum; ++i) {
+            est_par = new EstimateParallel(i, query, patternType, formulaType, catLen, VList, startingDecoms[0], subsetSize / threadnum, true);
+            ests.add(est_par);
+            thread = new Thread(est_par);
+            threads.add(thread);
+            thread.start();
+        }
+
+        for (Thread t : threads) {
+            t.join();
+        }
+
+        for (EstimateParallel r : ests) {
+            maxhops.addAll(r.maxhops);
+            minhops.addAll(r.minhops);
+            randomhops.addAll(r.randomhops);
+        }
+        List<List<Triple<Integer, String, Double>>> l = new ArrayList<>();
+        l.add(minhops);
+        l.add(randomhops);
+        l.add(maxhops);
+        return l;
+    }
+
+    public Double[] estimateByHopsRandom(Query query, Integer patternType, int formulaType, int catLen, String VList) throws Exception {
+        List<List<Triple<Integer, String, Double>>> l = getAllEstimatesRandom(query, patternType, formulaType, catLen, VList);
+        List<Triple<Integer, String, Double>> minhops = l.get(0);
+        List<Triple<Integer, String, Double>> randomhops = l.get(1);
+        List<Triple<Integer, String, Double>> maxhops = l.get(2);
+
+        int numFormula = 0;
+        Triple<Double, Double, Double> globalAggr = new Triple<>(Double.MAX_VALUE, Double.MIN_VALUE, 0.0);
+
+        // #hops -> (min, max, avg)
+        Map<Integer, Triple<Double, Double, Double>> numHop2aggr = new HashMap<>();
+        int maxLen = toVSet(VList).size() - catLen + 1;
+        int minLen = minhops.get(0).v2.split(",").length / 2 + 1;
+        Triple<Integer, String, Double> mintriple;
+        Triple<Integer, String, Double> maxtriple;
+        Triple<Integer, String, Double> randomtriple;
+
+        for (int i = 0; i < subsetSize; ++i) {
+            mintriple = minhops.get(i);
+            maxtriple = maxhops.get(i);
+            randomtriple = randomhops.get(i);
+
+            double minest = ((long) (mintriple.v3 * Math.pow(10, 6))) / Math.pow(10, 6);
+            double maxest = ((long) (maxtriple.v3 * Math.pow(10, 6))) / Math.pow(10, 6);
+            double randomest = ((long) (randomtriple.v3 * Math.pow(10, 6))) / Math.pow(10, 6);
+
+            globalAggr.v1 = Math.min(globalAggr.v1, randomest);
+            globalAggr.v2 = Math.max(globalAggr.v2, randomest);
+            globalAggr.v3 += randomest;
+
+            int minformulaLen = mintriple.v2.split(",").length / 2 + 1;
+            numHop2aggr.putIfAbsent(minformulaLen, new Triple<>(Double.MAX_VALUE, Double.MIN_VALUE, 0.0));
+            Triple<Double, Double, Double> minstats = numHop2aggr.get(minformulaLen);
+            minstats.v1 = Math.min(minstats.v1, minest);
+            minstats.v2 = Math.max(minstats.v2, minest);
+            minstats.v3 += minest;
+            numHop2aggr.put(minformulaLen, minstats);
+
+            int maxformulaLen = maxtriple.v2.split(",").length / 2 + 1;
+            numHop2aggr.putIfAbsent(maxformulaLen, new Triple<>(Double.MAX_VALUE, Double.MIN_VALUE, 0.0));
+            Triple<Double, Double, Double> maxstats = numHop2aggr.get(maxformulaLen);
+            maxstats.v1 = Math.min(maxstats.v1, maxest);
+            maxstats.v2 = Math.max(maxstats.v2, maxest);
+            maxstats.v3 += maxest;
+            numHop2aggr.put(maxformulaLen, maxstats);
+        }
+
+//        System.out.println("maxLen: " + maxLen);
+//        System.out.println("minLen: " + minLen);
+//        System.out.println("allHop: " + numFormula);
+
+        return new Double[] {
+                globalAggr.v1,
+                globalAggr.v2,
+                globalAggr.v3 / subsetSize,
+                numHop2aggr.get(minLen).v1,
+                numHop2aggr.get(minLen).v2,
+                numHop2aggr.get(minLen).v3 / subsetSize,
+                numHop2aggr.get(maxLen).v1,
+                numHop2aggr.get(maxLen).v2,
+                numHop2aggr.get(maxLen).v3 / subsetSize
+        };
+    }
+
+    private Map<String, Map<String, Map<String, Map<String, Double>>>> loadEntropy(String entropyFile) throws Exception {
+        long startTime = System.currentTimeMillis();
+        long endTime;
+
+        // baseVList -> baseLabelSeq -> extVList -> extLabel -> cv/entropy
+        Map<String, Map<String, Map<String, Map<String, Double>>>> uniformityMeasure = new HashMap<>();
+        BufferedReader catalogueReader = new BufferedReader(new FileReader(entropyFile));
+        String[] info;
+        String baseVList, baseLabelSeq, extVList, extLabel;
+        String line = catalogueReader.readLine();
+        while (null != line) {
+            info = line.split(",");
+
+            baseVList = info[1];
+            baseLabelSeq = info[2];
+            extVList = info[3];
+            extLabel = info[4];
+            if (info[5].contains("NaN")) continue;
+            Double measure = Double.parseDouble(info[5]);
+            uniformityMeasure.putIfAbsent(baseVList, new HashMap<>());
+            uniformityMeasure.get(baseVList).putIfAbsent(baseLabelSeq, new HashMap<>());
+            uniformityMeasure.get(baseVList).get(baseLabelSeq).putIfAbsent(extVList, new HashMap<>());
+            uniformityMeasure.get(baseVList).get(baseLabelSeq).get(extVList).putIfAbsent(extLabel, measure);
+
+//            if (uniformityMeasure.get()) {
+//                catalogue.get(queryType).putIfAbsent(vList, new HashMap<>());
+//                catalogue.get(queryType).get(vList).put(labelSeq, count);
+//            }
+
+            line = catalogueReader.readLine();
+        }
+        catalogueReader.close();
+
+        endTime = System.currentTimeMillis();
+        System.out.println("Loading Catalogue: " + ((endTime - startTime) / 1000.0) + " sec");
+        return uniformityMeasure;
+    }
+
+
+    public List<Triple<List<Double>, String, Double>> getAllEntropy(
+            Query query, Integer patternType, int formulaType, int catLen, String VList, String measurementFile) throws Exception {
+        List<Triple<List<Double>, String, Double>> alreadyCovered = new ArrayList<>();
+        Set<String> alledges = toVSet(VList);
+
+        computeDecomByLength(query, catLen);
+        Integer[][] startingDecoms = getDecomByLen(catLen);
+
+        List<Thread> threads = new ArrayList<>();
+        List<EntropyParallel> ests = new ArrayList<>();
+        EntropyParallel est_par;
+        Thread thread;
+        int i = 0;
+        Map<String, Map<String, Map<String, Map<String, Double>>>> entropy = loadEntropy(measurementFile);
+        for (Integer[] vList : startingDecoms) {
+            est_par = new EntropyParallel(i, query, patternType, formulaType, catLen,
+                    VList, vList, entropy);
+            ests.add(est_par);
+            thread = new Thread(est_par);
+            threads.add(thread);
+            thread.start();
+            i++;
+        }
+
+        for(Thread t : threads) {
+            t.join();
+        }
+
+        for (EntropyParallel r : ests) {
+            alreadyCovered.addAll(r.alreadyCovered);
+        }
+
+        // System.out.println(alreadyCovered);
+        return alreadyCovered.stream()
+                .filter(triple -> toVSet(triple.v2).equals(alledges))
+                .collect(Collectors.toList());
+    }
+
+    public Double[] getQErrors(Query query, Integer patternType, int formulaType, int catLen, String VList, boolean sampling, Double trueCard) throws Exception {
+        Set<Double> allEst = new HashSet<>();
+        Double maxMaxEst;
+        if (sampling) {
+            List<List<Triple<Integer, String, Double>>> l = getAllEstimatesRandom(query, patternType, formulaType, catLen, VList);
+            List<Triple<Integer, String, Double>> minhops = l.get(0);
+            List<Triple<Integer, String, Double>> randomhops = l.get(1);
+            List<Triple<Integer, String, Double>> maxhops = l.get(2);
+            for (int i = 0; i < subsetSize; ++i) {
+                Double minEst = minhops.get(i).v3;
+                Double maxEst = maxhops.get(i).v3;
+                Double randomEst = randomhops.get(i).v3;
+                if (!allEst.contains(minEst)) allEst.add(minEst);
+                if (!allEst.contains(maxEst)) allEst.add(maxEst);
+                if (!allEst.contains(randomEst)) allEst.add(randomEst);
+            }
+            maxMaxEst = estimateByHopsRandom(query, patternType, formulaType, catLen, VList)[7];
+        } else {
+            List<Triple<Set<Integer>, String, Double>> alreadyCovered = getAllEstimates(query, patternType, formulaType, catLen, VList);
+            for (Triple<Set<Integer>, String, Double> triple : alreadyCovered) {
+                Double est = triple.v3;
+                if (!allEst.contains(est)) allEst.add(est);
+            }
+            maxMaxEst = estimateByHops(query, patternType, formulaType, catLen, VList)[7];
+        }
+        Double[] estimations = allEst.toArray(new Double[allEst.size()]);
+        Double[] qErrors = new Double[estimations.length];
+        for (int i = 0; i < estimations.length; ++i) {
+            // overestimation
+            if (estimations[i] >= trueCard) qErrors[i] = estimations[i] / trueCard;
+                // underestimation
+            else qErrors[i] = - (trueCard / estimations[i]);
+        }
+        Arrays.sort(qErrors, Comparator.comparingDouble(Math::abs));
+        Double[] results = new Double[4];
+        results[0] = qErrors[0];
+        if (maxMaxEst >= trueCard) results[1] = maxMaxEst / trueCard;
+        else results[1] = - (trueCard / maxMaxEst);
+        int maxMaxRank = -1;
+        for (int i = 0; i < qErrors.length; ++i) {
+            if (qErrors[i].equals(results[1])) {
+                maxMaxRank = i;
+                break;
+            }
+        }
+        // results[2] = (maxMaxRank + 1.0) / (double) qErrors.length;
+        results[2] = maxMaxRank + 1.0;
+        results[3] = (double) qErrors.length;
+        System.out.println("p* q-error: " + results[0]);
+        System.out.println("max-max q-error: " + results[1]);
+        System.out.println("max-max rank: " + results[2]);
+        System.out.println("number of estimations: " + qErrors.length);
+        return results;
     }
 
     public static void main(String[] args) throws Exception {

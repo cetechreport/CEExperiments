@@ -13,7 +13,11 @@ public class PartitionedCatalogueRunnable implements Runnable {
     private Double[] estimates;
 
     public void run() {
-        estimates = estimator.estimate(query, patternType, formulaType, catLen);
+        try {
+            estimates = estimator.estimate(query, patternType, formulaType, catLen);
+        } catch (Exception e) {
+            return;
+        }
     }
 
     public Double[] getEstimates() {

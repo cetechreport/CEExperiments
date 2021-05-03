@@ -356,7 +356,7 @@ public class CatalogueEntropy {
 
         double mean = total / numDataPoints;
         double sd = computeSD(histogram, mean, numDataPoints);
-        return mean / sd;
+        return sd / mean;
     }
 
     private double computeSD(Map<Integer, Long> histogram, double mean, long numTotalBases) {
@@ -385,7 +385,7 @@ public class CatalogueEntropy {
             numBins++;
         }
 
-        entropy /= numBins;
+//        entropy /= numBins;
 
         return entropy;
     }
@@ -411,6 +411,16 @@ public class CatalogueEntropy {
         System.out.println("persistCatalogue: " + args[5]);
         System.out.println();
 
+        int i = args[4].lastIndexOf('/');
+        String cvFile, entropyFile;
+        if (i == -1) {
+            cvFile = "cv_" + args[4];
+            entropyFile = "entropy_" + args[4];
+        } else {
+            cvFile = args[4].substring(0, i) + "/cv_" + args[4].substring(i + 1);
+            entropyFile = args[4].substring(0, i) + "/entropy_" + args[4].substring(i + 1);
+        }
+
         CatalogueEntropy catalogueEntropy = new CatalogueEntropy();
         catalogueEntropy.readGraph(args[0]);
         catalogueEntropy.readCatalogue(args[1], Integer.parseInt(args[2]));
@@ -420,7 +430,10 @@ public class CatalogueEntropy {
         if (Boolean.parseBoolean(args[5])) {
             catalogueEntropy.persistUpdatedCatalogue(updatedCatalogue);
         }
-        catalogueEntropy.computeUniformityMeasure(args[3]);
-        catalogueEntropy.persistUniformityMeasure(args[4]);
+
+        catalogueEntropy.computeUniformityMeasure("cv");
+        catalogueEntropy.persistUniformityMeasure(cvFile);
+        catalogueEntropy.computeUniformityMeasure("entropy");
+        catalogueEntropy.persistUniformityMeasure(entropyFile);
     }
 }

@@ -34,13 +34,15 @@ public class QueryDecomposer {
         StringJoiner sj = new StringJoiner("->");
         for (int i = 0; i < patternVList.length; i += 2) {
             intersection.clear();
-            intersection.addAll(topology.outgoing.get(patternVList[i]).keySet());
-            intersection.retainAll(topology.incoming.get(patternVList[i + 1]).keySet());
+            // intersection.addAll(topology.outgoing.get(patternVList[i]).keySet());
+            // intersection.retainAll(topology.incoming.get(patternVList[i + 1]).keySet());
 
             // expected to have only 1 label
-            for (Integer label : intersection) {
-                sj.add(label.toString());
-            }
+            // for (Integer label : intersection) {
+            //     sj.add(label.toString());
+            // }
+            Integer label = topology.src2dest2label.get(patternVList[i]).get(patternVList[i + 1]);
+            sj.add(label.toString());
         }
         return sj.toString();
     }

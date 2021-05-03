@@ -65,22 +65,28 @@ public class Util {
         String[] labelSeq = labelSeqString.split("->");
         for (int i = 0; i < edges.length; ++i) {
             String[] srcDest = edges[i].split("-");
+//            if (leaves.contains(Integer.parseInt(srcDest[0])) ||
+//                leaves.contains(Integer.parseInt(srcDest[1]))) {
+
+            StringJoiner vListSj = new StringJoiner(";");
+            StringJoiner labelSeqSj = new StringJoiner("->");
+            for (int j = 0; j < edges.length; ++j) {
+                if (i == j) continue;
+                vListSj.add(edges[j]);
+                labelSeqSj.add(labelSeq[j]);
+            }
             if (leaves.contains(Integer.parseInt(srcDest[0])) ||
-                leaves.contains(Integer.parseInt(srcDest[1]))) {
-
-                StringJoiner vListSj = new StringJoiner(";");
-                StringJoiner labelSeqSj = new StringJoiner("->");
-                for (int j = 0; j < edges.length; ++j) {
-                    if (i == j) continue;
-                    vListSj.add(edges[j]);
-                    labelSeqSj.add(labelSeq[j]);
-                }
-
+                    leaves.contains(Integer.parseInt(srcDest[1]))) {
                 splits.add(new Pair<>(
-                    new Pair<>(vListSj.toString(), edges[i]),
-                    new Pair<>(labelSeqSj.toString(), labelSeq[i])
+                        new Pair<>(vListSj.toString(), edges[i]),
+                        new Pair<>(labelSeqSj.toString(), labelSeq[i])
                 ));
             }
+            splits.add(new Pair<>(
+                    new Pair<>(edges[i], vListSj.toString()),
+                    new Pair<>(labelSeq[i], labelSeqSj.toString())
+            ));
+//            }
         }
 
         return splits;

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+java -Xmx100G -cp CEExperiments.jar Graphflow.LargeBenchmarkQueryDecomposer $2
+java -Xmx100G -cp CEExperiments.jar Graphflow.Catalogue $1 catalogue.txt
+java -Xmx100G -cp CEExperiments.jar IMDB.AcyclicQueryEvaluation cat catalogue.txt false 3 all false $2
+cat estimation.csv > $3
+rm catalogue.txt estimation.csv

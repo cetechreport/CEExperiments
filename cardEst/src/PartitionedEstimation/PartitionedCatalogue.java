@@ -297,7 +297,7 @@ public class PartitionedCatalogue {
         }
     }
 
-    public Double[] estimate(Query query, Integer patternType, int formulaType, int catLen) {
+    public Double[] estimate(Query query, Integer patternType, int formulaType, int catLen) throws Exception {
         Pair<String, String> vListAndLabelSeq = Util.topologyToVListAndLabelSeq(query.topology);
         vListAndLabelSeq = Util.sort(vListAndLabelSeq);
 

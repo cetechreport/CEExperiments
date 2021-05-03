@@ -124,7 +124,7 @@ public class AcyclicQueryEvaluation {
 
     private int getRandomProdYear() {
         return random.nextInt(Labels.MAX_PROD_YEAR - Labels.MIN_PROD_YEAR + 1)
-            + Labels.MIN_PROD_YEAR;
+                + Labels.MIN_PROD_YEAR;
     }
 
     private List<Pair<String, Integer>> initFilters(int numVertices) {
@@ -580,9 +580,9 @@ public class AcyclicQueryEvaluation {
                 for (int e = 1; e <= numEdges; e++) {
                     edge = queryString[e].split("(-\\[)|(]>)");
                     topology.addEdge(
-                        Integer.parseInt(edge[0]),
-                        Integer.parseInt(edge[1]),
-                        Integer.parseInt(edge[2])
+                            Integer.parseInt(edge[0]),
+                            Integer.parseInt(edge[1]),
+                            Integer.parseInt(edge[2])
                     );
                 }
 
@@ -628,7 +628,7 @@ public class AcyclicQueryEvaluation {
 
         BufferedWriter resultWriter = new BufferedWriter(new FileWriter("estimation.csv"));
         AcyclicQueryEvaluation queryEvaluation = null;
-            //new AcyclicQueryEvaluation(args[args.length - 1].split(","));
+        //new AcyclicQueryEvaluation(args[args.length - 1].split(","));
 //        AcyclicQueryEvaluation queryEvaluation = new AcyclicQueryEvaluation(6);
 //        queryEvaluation.sampleQueries(NUM_QUERY_EACH_TYPE * NUM_QUERY_TYPES);
 //        queryEvaluation.sampleQueries(NUM_QUERY_EACH_TYPE);
@@ -670,14 +670,14 @@ public class AcyclicQueryEvaluation {
 
             Double[] estimations;
             CSetsMTCombined cSetsMTCombined = new CSetsMTCombined(
-                args[1], args[2], args[3], args[4], args[5], Integer.parseInt(args[6])
+                    args[1], args[2], args[3], args[4], args[5], Integer.parseInt(args[6])
             );
             for (Query query : queryEvaluation.queries) {
                 estimations = cSetsMTCombined.estimate(query);
                 StringJoiner sj = new StringJoiner(",");
                 sj.add(query.toString())
-                    .add(estimations[0].toString())
-                    .add(estimations[1].toString());
+                        .add(estimations[0].toString())
+                        .add(estimations[1].toString());
                 resultWriter.write(sj.toString() + "\n");
 
                 progress += 100.0 / numQueries;
@@ -700,9 +700,9 @@ public class AcyclicQueryEvaluation {
                 estimations = mt.estimate(query);
                 StringJoiner sj = new StringJoiner(",");
                 sj.add(query.toString())
-                  .add(estimations[0].toString())
-                  .add(estimations[1].toString())
-                  .add(estimations[2].toString());
+                        .add(estimations[0].toString())
+                        .add(estimations[1].toString())
+                        .add(estimations[2].toString());
                 resultWriter.write(sj.toString() + "\n");
 
                 progress += 100.0 / numQueries;
@@ -797,7 +797,7 @@ public class AcyclicQueryEvaluation {
             for (int i = 0; i < queryEvaluation.queries.size(); ++i) {
                 Query query = queryEvaluation.queries.get(i);
                 runnable = new PartitionedCatalogueRunnable(
-                    i, pcat, query, patternType, formulaType, catLen);
+                        i, pcat, query, patternType, formulaType, catLen);
                 runnables.add(runnable);
                 thread = new Thread(runnable);
                 threads.add(thread);
@@ -814,9 +814,9 @@ public class AcyclicQueryEvaluation {
                 estimations = runnables.get(i).getEstimates();
                 StringJoiner sj = new StringJoiner(",");
                 sj.add(query.toString())
-                    .add(estimations[0].toString())
-                    .add(estimations[1].toString())
-                    .add(estimations[2].toString());
+                        .add(estimations[0].toString())
+                        .add(estimations[1].toString())
+                        .add(estimations[2].toString());
                 resultWriter.write(sj.toString() + "\n");
 
                 progress += 100.0 / numQueries;
@@ -826,16 +826,29 @@ public class AcyclicQueryEvaluation {
             System.out.println("catalogueFile: " + args[1]);
             System.out.println("debug: " + args[2]);
             System.out.println("maxLen: " + args[3]);
-            System.out.println("patternType: " + args[4]);
-            System.out.println("formulaType: " + args[5]);
+            System.out.println("formulaType: " + args[4]);
+            System.out.println("random: " + args[5]);
             System.out.println("queries: " + args[6]);
             System.out.println();
 
             boolean debug = Boolean.parseBoolean(args[2]);
-            int formulaType = Util.getFormulaType(args[5]);
+            boolean random = Boolean.parseBoolean(args[5]);
+            int formulaType = Util.getFormulaType(args[4]);
             if (formulaType == -1) return;
 
             int catLen = Integer.parseInt(args[3]);
+
+            //get the patternType
+            BufferedReader reader = new BufferedReader(new FileReader(args[1]));
+            String line = reader.readLine();
+            String[] info = line.split(",");
+            reader.close();
+
+            //get vlist
+            reader = new BufferedReader(new FileReader(args[6]));
+            line = reader.readLine();
+            String[] queries_info = line.split(",");
+            reader.close();
 
             Double[] estimations;
             Catalogue catalogue = new Catalogue(args[1], catLen);
@@ -843,7 +856,11 @@ public class AcyclicQueryEvaluation {
             for (int i = 0; i < queries.size(); ++i) {
                 Query query = queries.get(i);
 //                estimations = catalogue.estimate(query, i / NUM_QUERY_EACH_TYPE, debug);
-                estimations = catalogue.estimateByHops(query, Integer.parseInt(args[4]), formulaType, catLen);
+                if (random) {
+                    estimations = catalogue.estimateByHopsRandom(query, Integer.parseInt(info[0]), formulaType, catLen, queries_info[0]);
+                } else {
+                    estimations = catalogue.estimateByHops(query, Integer.parseInt(info[0]), formulaType, catLen, queries_info[0]);
+                }
 
                 StringJoiner sj = new StringJoiner(",");
                 sj.add(query.toString());
@@ -874,7 +891,7 @@ public class AcyclicQueryEvaluation {
                 double estWithSubmod = pessimistic.estimate(query, patternType, true);
 
                 resultWriter.write(
-                    query.toString() + "," + estWithoutSubmod + "," + estWithSubmod + "\n");
+                        query.toString() + "," + estWithoutSubmod + "," + estWithSubmod + "\n");
 
                 progress += 100.0 / numQueries;
                 System.out.print("\rEstimating: " + (int) progress + "%");
@@ -893,7 +910,7 @@ public class AcyclicQueryEvaluation {
             String catMaxDegFile = args[5].contains("null") ? null : args[5];
 
             PartitionedCLLP cllp =
-                new PartitionedCLLP(args[2], args[3], catalogueFile, catMaxDegFile);
+                    new PartitionedCLLP(args[2], args[3], catalogueFile, catMaxDegFile);
             // hacky way to fill hashIdCombs in PartitionedCatalogue
             cllp.prepareEstimate(queries.get(0), partType);
 
@@ -905,7 +922,7 @@ public class AcyclicQueryEvaluation {
                 double estWithSubmod = cllp.estimate(query, true);
 
                 resultWriter.write(
-                    query.toString() + "," + estWithoutSubmod + "," + estWithSubmod + "\n");
+                        query.toString() + "," + estWithoutSubmod + "," + estWithSubmod + "\n");
 
                 progress += 100.0 / numQueries;
                 System.out.print("\rEstimating: " + (int) progress + "%");
@@ -932,7 +949,7 @@ public class AcyclicQueryEvaluation {
                 double estWithSubmod = cllp.estimate(query, true);
 
                 resultWriter.write(
-                    query.toString() + "," + estWithoutSubmod + "," + estWithSubmod + "\n");
+                        query.toString() + "," + estWithoutSubmod + "," + estWithSubmod + "\n");
 
                 progress += 100.0 / numQueries;
                 System.out.print("\rEstimating: " + (int) progress + "%");
