@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# query processing time in rdf3x
+# ${1} - query file
+# ${2} - dataset name
+# ${3} - estimator (one of minMin, allMin, maxMin, minAvg, allAvg, maxAvg, minMax, allMax, maxMax, baselineMinMin, midEdgeMaxMax, trigExtMaxMax, and rdf3x.
+# ${4} - output dest file
+
+for query in $(cat ${1}); do
+        echo ${query} > queryTemp.txt
+        java -Xmx100G -cp CEExperiments.jar Graphflow.LargeBenchmarkQueryDecomposer queryTemp.txt
+        java -Xmx100G -cp CEExperiments.jar Graphflow.Catalogue ${2}.csv catalogue.txt
+
+        if [ "${#3}" -ne 6 ]; then
+                java -Xmx100G -cp CEExperiments.jar Graphflow.TriangleCatalogue ${2}.csv queryTemp.txt tmp1.csv tmp2.csv allInclusive
+                cat tmp1.csv >> catalogue.txt
+                rm tmp1.csv
+                rm tmp2.csv
+        fi
+
+        python3 vlist_to_sparql.py queryTemp.txt sparql.txt
+        python3 get_edges.py sparql.txt edges.txt
+
+        echo ${query} ${3} > temp.txt
+        ./rdf3xquery ${2} sparql.txt ${3} 2>> temp.txt
+        cat temp.txt >> ${4}
+done
+
+rm temp.txt
+rm queryTemp.txt
+rm sparql.txt
+rm catalogue.txt
+rm edges.txt
