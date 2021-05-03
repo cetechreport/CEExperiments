@@ -21,6 +21,6 @@ We modified the following files to achieve cardinality injection:
   ./query_time <query file> <data> <estimator> <output file>
 ```
   For acyclic queries, estimator is one of ```minMin```, ```allMin```, ```maxMin```, ```minAvg```, ```allAvg```, ```maxAvg```, ```minMax```, ```allMax```, and ```maxMax```.
-  For cyclic queries, estimator is one of ```baselineMinMin```, ```midEdgeMaxMax```, and ```trigExtMaxMax```. To use the plan that rdf3x selects without cardinality injection, pass in <estimator> as ```rdf3x```.
+  For cyclic queries, estimator is one of ```baselineMinMin```, ```midEdgeMaxMax```, and ```trigExtMaxMax```. To use the plan that rdf3x selects without cardinality injection, pass in ```<estimator>``` as ```rdf3x```.
  
  Note that the jar file of the project CEExperiments should be put in the bin/ directory in order for the estimators to work.
