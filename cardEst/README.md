@@ -29,7 +29,7 @@ The datasets and queries will be made public upon publication of our technical p
 ```
   java -Xmx100G -cp CEExperiments.jar Graphflow.LargeBenchmarkQueryDecomposer <query file>
 ```
-* Generate the Acyclic Markov table entries
+* Generate the acyclic Markov table entries
 ```
   java -Xmx100G -cp CEExperiments.jar Graphflow.Catalogue <dataset> <query file>
 ```
@@ -37,7 +37,7 @@ The datasets and queries will be made public upon publication of our technical p
 ```
   java -Xmx100G -cp CEExperiments.jar Graphflow.TriangleCatalogue <dataset> <query file> <catalogue destination> <catalogue max degree destination> <cycle closing method>
 ```
-  cycle closing method is one of ```baseline```, ```allInclusive```, and ```avgSampledExentsionRate```
+  cycle closing method is one of ```baseline```, ```allInclusive```, and ```avgSampledExentsionRate```.
   
 ## Acyclic Cardinality Estimation
 ```
@@ -54,4 +54,4 @@ java -Xmx100G -cp CEExperiments.jar Graphflow.CyclicQueryEvaluation <cycle closi
   in our experiments, we set ```<hop mode>``` as ```true```, ```<random>``` as ```false```, and ```<all est>``` as ```true```.
 * All queries in the query file must be of the same shape, i.e., edges must be exactly the same and in the same order.
 * Each line in the output file has the format of edges, labels, estimations. The order of estimations is all-min, all-max, all-avg, min-min, min-max, min-avg, max-min, max-max, max-avg, and p*.
-* cycle closing method is one of ```baseline```, ```avgSampledExentsionRate```, and ```midEdge```
+* cycle closing method is one of ```baseline```, ```avgSampledExentsionRate```, and ```midEdge```.
