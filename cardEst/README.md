@@ -22,6 +22,7 @@ The datasets and queries will be made public upon publication of our technical p
   3,10,4
   1,11,5
   ```
+
 ## Run CEExperiment
   We use the phrases "Markov table" and "Catalogue" interchangeably in the descriptions below.
 * Decompose the query file. Note that all queries in one query file must be of the same shape, i.e., edges must be exactly the same and in the same order.
@@ -38,18 +39,12 @@ The datasets and queries will be made public upon publication of our technical p
   java -Xmx100G -cp CEExperiments.jar Graphflow.TriangleCatalogue <dataset> <query file> <catalogue destination> <catalogue max degree destination> <cycle closing method>
 ```
   cycle closing method is one of ```baseline```, ```allInclusive```, and ```avgSampledExentsionRate```
-* Cardinality estimation
-```
-  java -Xmx100G -cp CEExperiments.jar IMDB.AcyclicQueryEvaluation cat <dataset> <debug> <max len> <formula type> <random> <qeruy file>
-```
-  in our experiments, we set ```debug``` as ```false```, ```max len``` as ```3```, ```formula type``` as ```all```
-  
   
 ## Acyclic Cardinality Estimation
 ```
 java -Xmx100G -cp CEExperiments.jar IMDB.AcyclicQueryEvaluation cat <dataset> <debug> <max len> <formula type> <random> <query file>
 ```
-  in our experiments, we set ```debug``` as ```false```, ```max len``` as ```3```, and ```formula type``` as ```all```.
+  in our experiments, we set ```<debug>``` as ```false```, ```<max len>``` as ```3```, ```<formula type>``` as ```all```, and ```random``` as ```false```.
 * All queries in the query file must be of the same shape, i.e., edges must be exactly the same and in the same order.
 * Each line in the output file has the format of edges, labels, estimations. The order of estimations is all-min, all-max, all-avg, min-min, min-max, min-avg, max-min, max-max, max-avg, and p*.
 
