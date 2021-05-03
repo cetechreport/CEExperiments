@@ -7,6 +7,10 @@ We modified the following files to achieve cardinality injection:
   * tools/rdf3xquery/rdf3xquery.cpp
 
 ## Run Experiment
+* Go to the bin directory.
+```
+  cd bin/
+```
 * Load a dataset. Note that our datasets are stored such that each line is a comma delimited list of src, label, and dest. Therefore, we need to convert <data> to the N-Triples format first.
 ```
   convertToN3.py <data> data.n3
@@ -18,3 +22,5 @@ We modified the following files to achieve cardinality injection:
 ```
   For acyclic queries, estimator is one of ```minMin```, ```allMin```, ```maxMin```, ```minAvg```, ```allAvg```, ```maxAvg```, ```minMax```, ```allMax```, and ```maxMax```.
   For cyclic queries, estimator is one of ```baselineMinMin```, ```midEdgeMaxMax```, and ```trigExtMaxMax```. To use the plan that rdf3x selects without cardinality injection, pass in <estimator> as ```rdf3x```.
+ 
+ Note that the jar file of the project CEExperiments should be put in the bin/ directory in order for the estimators to work.
