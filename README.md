@@ -1,3 +1,3 @@
-```cardEst``` contains the code of cyclic and acyclic experiments
+```cardEst``` contains the code of the CEExperiments project.
 
-```rdf3x``` contains the code of rdf3x ecperiment
+```rdf3x``` contains the code of the RDF3X experiment.
