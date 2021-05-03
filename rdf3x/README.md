@@ -14,7 +14,7 @@ We modified the following files to achieve cardinality injection:
 * Load a dataset. Note that our datasets are stored such that each line is a comma delimited list of src, label, and dest. Therefore, we need to convert <data> to the N-Triples format first.
 ```
   convertToN3.py <data> data.n3
-  rdf3xload db data.n3
+  ./rdf3xload db data.n3
 ```
 * Query the dataset using a specified cardinality estimator and output an average query processing time.
 ```
