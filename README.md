@@ -4,4 +4,4 @@
 
 ```templateSpecificCharts``` contains the query-template-specific charts for Figure 9, 10, and 11 in the paper.
 
-We also added Markov Table implementation to G-CARE framework, which can be found [here](https://github.com/cetechreport/gcare).
+We also added Markov Table and ALLEY-S implementation to G-CARE framework, which can be found [here](https://github.com/cetechreport/gcare).
